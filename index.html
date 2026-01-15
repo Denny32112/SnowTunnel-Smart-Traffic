@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>雪山隧道決策助手</title>
+    <style>
+        body { font-family: "Microsoft JhengHei", sans-serif; background: #f0f2f5; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+        .container { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; }
+        .card { background: white; width: 300px; padding: 25px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); text-align: center; transition: transform 0.2s; }
+        .card:hover { transform: translateY(-5px); }
+        .title { font-size: 1.5em; font-weight: bold; margin-bottom: 20px; color: #333; }
+        .north .title { color: #007bff; }
+        .south .title { color: #28a745; }
+        
+        .speed-box { display: flex; justify-content: space-around; margin: 20px 0; }
+        .lane h3 { margin: 0; font-size: 0.9em; color: #666; }
+        .lane p { margin: 5px 0 0; font-size: 1.8em; font-weight: bold; color: #333; }
+        
+        .advice-box { background: #eee; padding: 15px; border-radius: 10px; margin-top: 15px; }
+        .advice-box h4 { margin: 0 0 5px; font-size: 0.9em; color: #555; }
+        .advice-text { font-size: 1.4em; font-weight: bold; color: #d9534f; }
+        
+        .status { width: 100%; text-align: center; margin-bottom: 20px; color: #888; font-size: 0.9em; }
+    </style>
+</head>
+<body>
+
+<div>
+    <div class="status" id="status">載入中...</div>
+    <div class="container">
+        
+        <div class="card north">
+            <div class="title">⬆️ 北上 (往台北)</div>
+            <div class="speed-box">
+                <div class="lane">
+                    <h3>內側車速</h3>
+                    <p id="n-in">-</p>
+                </div>
+                <div class="lane">
+                    <h3>外側車速</h3>
+                    <p id="n-out">-</p>
+                </div>
+            </div>
+            <div class="advice-box">
+                <h4>AI 建議路線</h4>
+                <div class="advice-text" id="n-advice">-</div>
+            </div>
+        </div>
+
+        <div class="card south">
+            <div class="title">⬇️ 南下 (往宜蘭)</div>
+            <div class="speed-box">
+                <div class="lane">
+                    <h3>內側車速</h3>
+                    <p id="s-in">-</p>
+                </div>
+                <div class="lane">
+                    <h3>外側車速</h3>
+                    <p id="s-out">-</p>
+                </div>
+            </div>
+            <div class="advice-box">
+                <h4>AI 建議路線</h4>
+                <div class="advice-text" id="s-advice">-</div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    async function updateData() {
+        try {
+            document.getElementById("status").innerText = "更新數據中...";
+            const res = await fetch('/api/average');
+            const data = await res.json();
+
+            // 更新北上
+            if (data.north && !data.north.error) {
+                document.getElementById("n-in").innerText = data.north.inner;
+                document.getElementById("n-out").innerText = data.north.outer;
+                document.getElementById("n-advice").innerText = data.north.advice;
+                // 變色
+                document.getElementById("n-advice").style.color = data.north.advice.includes("內") ? "#d9534f" : "#28a745";
+            }
+
+            // 更新南下
+            if (data.south && !data.south.error) {
+                document.getElementById("s-in").innerText = data.south.inner;
+                document.getElementById("s-out").innerText = data.south.outer;
+                document.getElementById("s-advice").innerText = data.south.advice;
+                // 變色
+                document.getElementById("s-advice").style.color = data.south.advice.includes("內") ? "#d9534f" : "#28a745";
+            }
+
+            const now = new Date();
+            document.getElementById("status").innerText = "最後更新: " + now.toLocaleTimeString();
+
+        } catch (e) {
+            document.getElementById("status").innerText = "連線錯誤";
+        }
+    }
+
+    updateData();
+    setInterval(updateData, 10000); // 每10秒更新
+</script>
+
+</body>
+</html>
